@@ -1,9 +1,15 @@
 package org.university.minilibrary;
 
+import java.nio.ByteBuffer;
 import java.nio.channels.*;
+import lombok.SneakyThrows;
+import org.apache.tomcat.util.json.JSONParser;
+
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.regex.*;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.Scanner;
 import java.io.*;
 import java.net.*;
@@ -12,105 +18,164 @@ public class MiniLibraryApplication {
     private static Selector selector = null;
     private static final Logger logger = LoggerFactory.getLogger(MiniLibraryApplication.class);
 
-    public static void main(String args[])
-    {
+    public static void main(String args[]) {
         try {
             // Этап подготовки
             Scanner in = new Scanner(System.in);
             System.out.print("Input IP: ");
             String ip = in.nextLine();
-            System.out.print("Input port: ");
-            int port = in.nextInt();
+            System.out.print("Input port (default 808): ");
+            int port = 808;
+            port = in.nextInt();
             System.out.print("Input directory: ");
             in.nextLine();
             String directory = in.nextLine();
             System.out.printf("IP: %s  Port: %d  Directory: %s \n", ip, port, directory);
             in.close();
 
-            // Прослушка TCP соединений
+            // Открытие селектора и привязка серверного сокета
             selector = Selector.open();
             ServerSocketChannel serverSocketChannel
                     = ServerSocketChannel.open();
             ServerSocket serverSocket
                     = serverSocketChannel.socket();
-
-            serverSocket.bind(
-                    new InetSocketAddress("localhost", 8089));
+            serverSocket.bind(new InetSocketAddress(ip, port));
             serverSocketChannel.configureBlocking(false);
+            int ops = serverSocketChannel.validOps();
+            serverSocketChannel.register(selector, ops, null);
 
+            // Обработка подключений
+            while (true) {
+                selector.select();
+                Set<SelectionKey> selectedKeys
+                        = selector.selectedKeys();
+                Iterator<SelectionKey> i
+                        = selectedKeys.iterator();
 
-            ip = "127.0.0.1";
-            directory = "C:\\Users\\User\\Downloads";
+                while (i.hasNext()) {
+                    SelectionKey key = i.next();
 
-            // Create server Socket
-            while (true){
-                ServerSocket ss = new ServerSocket(port);
-
-                // connect it to client socket
-                Socket s = ss.accept();
-                System.out.println("Connection established");
-
-                // start time
-                long startTime = System.currentTimeMillis();
-                long totalBytesRead = 0;
-
-                // reading frames
-                DataInputStream input = new DataInputStream(new BufferedInputStream(s.getInputStream()));
-                byte[] bytes = input.readAllBytes();
-                String fileContent = new String(bytes);
-                System.out.println(fileContent);
-
-                // use inputLine.toString(); here it would have whole source
-                // parsing frames
-                String regex = "^[a-zA-Z0-9\\.\\s]+\\r\\n\\d+\\r\\n[-\\p{ASCII}]+\\r\\n$";
-                Pattern pattern = Pattern.compile(regex);
-                Matcher matcher = pattern.matcher(fileContent);
-
-                // logging errors
-                if (matcher.matches()) {
-                    System.out.println("The data frame corresponds to the required format");
-                } else {
-                    System.out.println("The data frame does not match the required format");
-                    logger.error("Error parsing frame. Closing current channel.");
-                    ss.close();
-                    s.close();
-                    break;
+                    if (key.isAcceptable()) {
+                        // New client has been  accepted
+                        handleAccept(serverSocketChannel,
+                                key);
+                    } else if (key.isReadable()) {
+                        // We can run non-blocking operation
+                        // READ on our client
+                        handleRead(key, directory);
+                    }
+                    i.remove();
                 }
 
-                String massive[] =  fileContent.split("\\r\\n");
+//                ServerSocket ss = new ServerSocket(port);
+//
+//                // connect it to client socket
+//                Socket s = ss.accept();
+//                System.out.println("Connection established");
 
-                // Read fileName, length and payload
-                String fileName = massive[0];
-
-                int length = Integer.parseInt(massive[1]);
-
-                byte[] payload = new byte[length];
-                payload = massive[2].getBytes();
-
-                //Write fileName, length and payload
-                System.out.println(fileName + "\r\n" + length + "\r\n" + payload.toString());
-
-                // Save file
-                FileOutputStream fos = new FileOutputStream(directory + "\\" + fileName);
-                fos.write(payload);
-                fos.close();
-
-                System.out.println("File received: " + fileName);
-
-                // finish time
-                long currentTime = System.currentTimeMillis();
-                long elapsedTime = currentTime - startTime;
-                double bytesReadPerSecond = ((double) totalBytesRead / (double) elapsedTime) * 1000; // Байтов в секунду
-                double kilobytesReadPerSecond = bytesReadPerSecond / 1024; // Килобайтов в секунду
-                System.out.printf("Speed: %.2f KB/s\n", kilobytesReadPerSecond);
-
-                ss.close();
-                s.close();
-                break;
+//                // reading frames
+//                DataInputStream input = new DataInputStream(new BufferedInputStream(s.getInputStream()));
+//                byte[] bytes = input.readAllBytes();
+//                String fileContent = new String(bytes);
+//                System.out.println(fileContent);
+//
+//                // use inputLine.toString(); here it would have whole source
+//                // parsing frames
+//                String regex = "^[a-zA-Z0-9\\.\\s]+\\r\\n\\d+\\r\\n[-\\p{ASCII}]+\\r\\n$";
+//                Pattern pattern = Pattern.compile(regex);
+//                Matcher matcher = pattern.matcher(fileContent);
+//
+//                // logging errors
+//                if (matcher.matches()) {
+//                    System.out.println("The data frame corresponds to the required format");
+//                } else {
+//                    System.out.println("The data frame does not match the required format");
+//                    logger.error("Error parsing frame. Closing current channel.");
+//                    ss.close();
+//                    s.close();
+//                    break;
+//                }
+//
+//                String massive[] =  fileContent.split("\\r\\n");
+//
+//                // Read fileName, length and payload
+//                String fileName = massive[0];
+//
+//                int length = Integer.parseInt(massive[1]);
+//
+//                byte[] payload = new byte[length];
+//                payload = massive[2].getBytes();
+//
+//                //Write fileName, length and payload
+//                System.out.println(fileName + "\r\n" + length + "\r\n" + payload.toString());
+//
+//                // Save file
+//                FileOutputStream fos = new FileOutputStream(directory + "\\" + fileName);
+//                fos.write(payload);
+//                fos.close();
+//
+//                System.out.println("File received: " + fileName);
+//
+//                // finish time
+//                long currentTime = System.currentTimeMillis();
+//                long elapsedTime = currentTime - startTime;
+//                double bytesReadPerSecond = ((double) totalBytesRead / (double) elapsedTime) * 1000; // Байтов в секунду
+//                double kilobytesReadPerSecond = bytesReadPerSecond / 1024; // Килобайтов в секунду
+//                System.out.printf("Speed: %.2f KB/s\n", kilobytesReadPerSecond);
+//
+//                ss.close();
+//                s.close();
+//                break;
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void handleAccept(ServerSocketChannel mySocket, SelectionKey key) throws IOException {
+
+//        // start time
+//        long startTime = System.currentTimeMillis();
+//        long totalBytesRead = 0;
+        System.out.println("Connection Accepted..");
+
+        // Accept the connection and set non-blocking mode
+        SocketChannel client = mySocket.accept();
+        client.configureBlocking(false);
+
+        // Register that client is reading this channel
+        client.register(selector, SelectionKey.OP_READ);
+
+    }
+
+    @SneakyThrows
+    private static void handleRead(SelectionKey key, String directory) throws IOException {
+        System.out.println("Reading client's message.");
+
+        // create a ServerSocketChannel to read the request
+        SocketChannel client = (SocketChannel)key.channel();
+        // Create ByteBuffer to read data
+        ByteBuffer Buffer = ByteBuffer.allocate(1000000);
+        client.read(Buffer);
+        String data = new String(Buffer.array()).trim();
+        System.out.println("*** " + data + " ***");
+        JSONObject jsonObject = new JSONObject(data);
+        System.out.println("*** " + jsonObject + " ***");
+
+        String filename = (String) jsonObject.get("fileName");
+        int length = (int) jsonObject.get("length");
+        byte[] payload = ((String) jsonObject.get("payload")).getBytes();
+
+        System.out.println("FileName: " + filename);
+        System.out.println("Length: " + length);
+        System.out.println("Payload: " + payload);
+        System.out.println("Payload: " + new String(payload));
+
+        FileOutputStream fos = new FileOutputStream(directory + "\\" + filename);
+        fos.write(payload);
+        fos.close();
+        System.out.println("Received message - fileName: " + filename + ", length: " + length + ", payload: " + new String(payload));
+        System.out.println("File received: " + filename);
     }
 }
 
