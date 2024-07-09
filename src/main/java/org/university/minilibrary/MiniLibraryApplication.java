@@ -52,11 +52,11 @@ public class MiniLibraryApplication {
 
                 while (i.hasNext()) {
                     SelectionKey key = i.next();
-
                     if (key.isAcceptable()) {
                         // New client has been  accepted
                         handleAccept(serverSocketChannel,
                                 key);
+
                     } else if (key.isReadable()) {
                         // We can run non-blocking operation
                         // READ on our client
@@ -64,6 +64,7 @@ public class MiniLibraryApplication {
                     }
                     i.remove();
                 }
+
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -72,9 +73,6 @@ public class MiniLibraryApplication {
 
     private static void handleAccept(ServerSocketChannel mySocket, SelectionKey key) throws IOException {
 
-//        // start time
-//        long startTime = System.currentTimeMillis();
-//        long totalBytesRead = 0;
         System.out.println("Connection Accepted..");
 
         // Accept the connection and set non-blocking mode
@@ -89,24 +87,27 @@ public class MiniLibraryApplication {
     @SneakyThrows
     private static void handleRead(SelectionKey key, String directory) throws IOException {
         System.out.println("Reading client's message.");
-
+        long startTime = System.currentTimeMillis();
         // create a ServerSocketChannel to read the request
         SocketChannel client = (SocketChannel)key.channel();
         // Create ByteBuffer to read data
-        ByteBuffer Buffer = ByteBuffer.allocate(1000000);
+        ByteBuffer Buffer = ByteBuffer.allocate(1000);
         client.read(Buffer);
+
         String data = new String(Buffer.array()).trim();
-        System.out.println("*** " + data + " ***");
         JSONObject jsonObject = new JSONObject(data);
-        System.out.println("*** " + jsonObject + " ***");
 
         String filename = (String) jsonObject.get("fileName");
         int length = (int) jsonObject.get("length");
         byte[] payload = ((String) jsonObject.get("payload")).getBytes();
 
+        long currentTime = System.currentTimeMillis();
+        long elapsedTime = currentTime - startTime;
+        double speed = length / (elapsedTime / 1000.0);
+        System.out.println("Speed: " + speed + " bytes/sec");
+
         System.out.println("FileName: " + filename);
         System.out.println("Length: " + length);
-        System.out.println("Payload: " + payload);
         System.out.println("Payload: " + new String(payload));
 
         FileOutputStream fos = new FileOutputStream(directory + "\\" + filename);
