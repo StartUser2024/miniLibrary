@@ -3,8 +3,6 @@ package org.university.minilibrary;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import lombok.SneakyThrows;
-import org.apache.tomcat.util.json.JSONParser;
-
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,66 +64,6 @@ public class MiniLibraryApplication {
                     }
                     i.remove();
                 }
-
-//                ServerSocket ss = new ServerSocket(port);
-//
-//                // connect it to client socket
-//                Socket s = ss.accept();
-//                System.out.println("Connection established");
-
-//                // reading frames
-//                DataInputStream input = new DataInputStream(new BufferedInputStream(s.getInputStream()));
-//                byte[] bytes = input.readAllBytes();
-//                String fileContent = new String(bytes);
-//                System.out.println(fileContent);
-//
-//                // use inputLine.toString(); here it would have whole source
-//                // parsing frames
-//                String regex = "^[a-zA-Z0-9\\.\\s]+\\r\\n\\d+\\r\\n[-\\p{ASCII}]+\\r\\n$";
-//                Pattern pattern = Pattern.compile(regex);
-//                Matcher matcher = pattern.matcher(fileContent);
-//
-//                // logging errors
-//                if (matcher.matches()) {
-//                    System.out.println("The data frame corresponds to the required format");
-//                } else {
-//                    System.out.println("The data frame does not match the required format");
-//                    logger.error("Error parsing frame. Closing current channel.");
-//                    ss.close();
-//                    s.close();
-//                    break;
-//                }
-//
-//                String massive[] =  fileContent.split("\\r\\n");
-//
-//                // Read fileName, length and payload
-//                String fileName = massive[0];
-//
-//                int length = Integer.parseInt(massive[1]);
-//
-//                byte[] payload = new byte[length];
-//                payload = massive[2].getBytes();
-//
-//                //Write fileName, length and payload
-//                System.out.println(fileName + "\r\n" + length + "\r\n" + payload.toString());
-//
-//                // Save file
-//                FileOutputStream fos = new FileOutputStream(directory + "\\" + fileName);
-//                fos.write(payload);
-//                fos.close();
-//
-//                System.out.println("File received: " + fileName);
-//
-//                // finish time
-//                long currentTime = System.currentTimeMillis();
-//                long elapsedTime = currentTime - startTime;
-//                double bytesReadPerSecond = ((double) totalBytesRead / (double) elapsedTime) * 1000; // Байтов в секунду
-//                double kilobytesReadPerSecond = bytesReadPerSecond / 1024; // Килобайтов в секунду
-//                System.out.printf("Speed: %.2f KB/s\n", kilobytesReadPerSecond);
-//
-//                ss.close();
-//                s.close();
-//                break;
             }
         } catch (IOException e) {
             e.printStackTrace();
