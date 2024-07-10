@@ -5,7 +5,6 @@ import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import lombok.SneakyThrows;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Iterator;
@@ -96,7 +95,7 @@ public class MiniLibraryApplication {
         // create a ServerSocketChannel to read the request
         SocketChannel client = (SocketChannel)key.channel();
         // Create ByteBuffer to read data
-        ByteBuffer Buffer = ByteBuffer.allocate(1024*1024*50);
+        ByteBuffer Buffer = ByteBuffer.allocate(1024*1024*5);
         client.read(Buffer);
         Buffer.flip();
         byte[] bytes = new byte[Buffer.remaining()];
@@ -106,9 +105,6 @@ public class MiniLibraryApplication {
 
         Gson gson = new Gson();
         JsonObject jsonObject = gson.fromJson(json, JsonObject.class);
-
-//        String data = new String(Buffer.array()).trim();
-//        JSONObject jsonObject = new JSONObject(data);
 
         String filename = jsonObject.get("name").getAsString();
         long length = jsonObject.get("length").getAsLong();
@@ -132,127 +128,3 @@ public class MiniLibraryApplication {
         client.close();
     }
 }
-
-//                ps.close();
-//                br.close();
-//                kb.close();
-//            // Read length
-//            int length = Integer.parseInt(input.readLine().trim());
-
-//            // Read payload
-//            byte[] payload = new byte[length];
-//            input.readFully(payload);
-//                // to send data to the client
-//                PrintStream ps
-//                        = new PrintStream(s.getOutputStream());
-//
-//                BufferedReader br
-//                        = new BufferedReader(
-//                        new InputStreamReader(
-//                                s.getInputStream()));
-//
-//                // to read data from the keyboard
-//                BufferedReader kb
-//                        = new BufferedReader(
-//                        new InputStreamReader(System.in));
-                // to read data coming from the client
-
-
-                // server executes continuously
-//                while (true) {
-//
-//                    String str, str1;
-//
-//                    // repeat as long as the client
-//                    // does not send a null string
-//
-//                    // read from client
-//                    while ((str = br.readLine()) != null) {
-//                        System.out.println(str);
-//                        str1 = kb.readLine();
-//
-//                        // send to client
-//                        ps.println(str1);
-//                    }
-
-                    // close connection
-//                    ps.close();
-
-                    // end of while
-
-
-//    private ServerSocket serverSocket;
-//    private Socket clientSocket;
-//    private PrintWriter out;
-//    private BufferedReader in;
-//
-//    public static void main(String[] args) {
-//        String ip = "127.0.0.1", directory = "C:\\Users\\User\\Downloads";
-//        int port = 0;
-//
-//        // Запрос IP адреса, порта и директории у пользователя
-//        // (здесь не показано для краткости)
-//
-//        try {
-//            ServerSocket serverSocket = new ServerSocket(port);
-//            System.out.println("Server running on " + ip + ":" + port);
-//
-//            while (true) {
-//                System.out.println("Waiting for the client on the port " +
-//                        serverSocket.getLocalPort() + "...");
-//                Socket socket = serverSocket.accept();
-//                System.out.println("Просто подключается к " + socket.getRemoteSocketAddress());
-//
-//                InputStream inputStream = socket.getInputStream();
-//
-//                // Чтение данных из сокета
-//                byte[] buffer = new byte[1024];
-//                int bytesRead;
-//                long startTime = System.currentTimeMillis();
-//                long totalBytesRead = 0;
-//
-//                // Чтение первой строки (название файла)
-//                String fileName = readLine(inputStream);
-//                System.out.println("File name: " + fileName);
-//
-//                // Чтение второй строки (размер данных)
-//                String lengthStr = readLine(inputStream);
-//                System.out.println("Length: " + lengthStr);
-//                int length = Integer.parseInt(lengthStr);
-//
-//                // Чтение данных
-//                FileOutputStream fileOutputStream = new FileOutputStream(directory + "/" + fileName);
-//
-//                while (totalBytesRead < length) {
-//                    bytesRead = inputStream.read(buffer);
-//                    totalBytesRead += bytesRead;
-//                    fileOutputStream.write(buffer, 0, bytesRead);
-//
-//                    long currentTime = System.currentTimeMillis();
-//                    long elapsedTime = currentTime - startTime;
-//                    double speed = totalBytesRead / (elapsedTime / 1000.0);
-//                    System.out.println("Speed: " + speed + " bytes/sec");
-//                }
-//
-//                fileOutputStream.close();
-//                System.out.println("File saved successfully");
-//
-//                socket.close();
-//            }
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
-//
-//    private static String readLine(InputStream inputStream) throws IOException {
-//        StringBuilder sb = new StringBuilder();
-//        int c;
-//        while ((c = inputStream.read()) != '\r') {
-//            sb.append((char) c);
-//        }
-//        // пропускаем символ переноса строки
-//        inputStream.read();
-//        return sb.toString();
-//    }
-//}
