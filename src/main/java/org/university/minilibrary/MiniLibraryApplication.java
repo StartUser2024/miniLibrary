@@ -1,5 +1,7 @@
 package org.university.minilibrary;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import lombok.SneakyThrows;
@@ -21,13 +23,15 @@ public class MiniLibraryApplication {
             // Этап подготовки
             Scanner in = new Scanner(System.in);
             System.out.print("Input IP: ");
-            String ip = in.nextLine();
+            //String ip = in.nextLine();
+            String ip = "127.0.0.1";
             System.out.print("Input port (default 808): ");
             int port = 808;
-            port = in.nextInt();
+            //port = in.nextInt();
             System.out.print("Input directory: ");
-            in.nextLine();
-            String directory = in.nextLine();
+            //in.nextLine();
+            //String directory = in.nextLine();
+            String directory = "C:\\Users\\User\\Downloads\\Arhiv";
             System.out.printf("IP: %s  Port: %d  Directory: %s \n", ip, port, directory);
             in.close();
 
@@ -88,18 +92,27 @@ public class MiniLibraryApplication {
     private static void handleRead(SelectionKey key, String directory) throws IOException {
         System.out.println("Reading client's message.");
         long startTime = System.currentTimeMillis();
+
         // create a ServerSocketChannel to read the request
         SocketChannel client = (SocketChannel)key.channel();
         // Create ByteBuffer to read data
-        ByteBuffer Buffer = ByteBuffer.allocate(1000);
+        ByteBuffer Buffer = ByteBuffer.allocate(1024*1024*50);
         client.read(Buffer);
+        Buffer.flip();
+        byte[] bytes = new byte[Buffer.remaining()];
+        Buffer.get(bytes);
 
-        String data = new String(Buffer.array()).trim();
-        JSONObject jsonObject = new JSONObject(data);
+        String json = new String(bytes);
 
-        String filename = (String) jsonObject.get("fileName");
-        int length = (int) jsonObject.get("length");
-        byte[] payload = ((String) jsonObject.get("payload")).getBytes();
+        Gson gson = new Gson();
+        JsonObject jsonObject = gson.fromJson(json, JsonObject.class);
+
+//        String data = new String(Buffer.array()).trim();
+//        JSONObject jsonObject = new JSONObject(data);
+
+        String filename = jsonObject.get("name").getAsString();
+        long length = jsonObject.get("length").getAsLong();
+        byte[] payload = gson.fromJson(jsonObject.get("data"), byte[].class);
 
         long currentTime = System.currentTimeMillis();
         long elapsedTime = currentTime - startTime;
@@ -115,6 +128,8 @@ public class MiniLibraryApplication {
         fos.close();
         System.out.println("Received message - fileName: " + filename + ", length: " + length + ", payload: " + new String(payload));
         System.out.println("File received: " + filename);
+
+        client.close();
     }
 }
 
