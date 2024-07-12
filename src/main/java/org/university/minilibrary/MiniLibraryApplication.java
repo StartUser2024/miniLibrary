@@ -1,20 +1,29 @@
 package org.university.minilibrary;
 
-import java.nio.ByteBuffer;
-import java.nio.channels.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.Scanner;
-import java.io.*;
-import java.net.*;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 public class MiniLibraryApplication {
     private static Selector selector = null;
     private static final Logger logger = LoggerFactory.getLogger(MiniLibraryApplication.class);
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         try {
             Scanner in = new Scanner(System.in);
             System.out.print("Input IP: ");
@@ -118,36 +127,46 @@ public class MiniLibraryApplication {
 
         long count = 0;
         long startTime = System.currentTimeMillis();
-        long ReadInHalfSecond = 0;
+        long readInHalfSecond = 0;
+
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+
+//        Runnable task = (int count) -> {
+//            System.out.println(count);
+//        };
+
+        // Запускаем задачу через 5 секунд и затем каждые 3 секунды
+        //executor.scheduleAtFixedRate(task, 5, 3, TimeUnit.SECONDS);
+
         System.out.print("Data acquisition rate: ? b/sec");
         while (count < length) {
             int bytesRead = client.read(buffer);
             count += bytesRead;
-            ReadInHalfSecond += bytesRead;
+            readInHalfSecond += bytesRead;
             long currentTime = System.currentTimeMillis();
             buffer.flip();
             fos.write(buffer.array(), 0, bytesRead);
             buffer.clear();
             if (currentTime - startTime > 500) { // Каждые 0.5 секунды
                 startTime = currentTime;
-                if ((ReadInHalfSecond / (512*1024*1024)) > 1) { // Изменение коследней строки на актуальную
-                    double factor = (double) ReadInHalfSecond;
+                if ((readInHalfSecond / (512*1024*1024)) > 1) { // Изменение коследней строки на актуальную
+                    double factor = (double) readInHalfSecond;
                     factor = factor / (512*1024*1024);
                     String resultOfSpeed = String.format("%.2f", factor);
                     System.out.print("\r");
                     System.out.print("Data acquisition rate: " + resultOfSpeed + " Gb/sec");
                     System.out.flush();
 
-                } else if ((ReadInHalfSecond / (512*1024)) > 1) {
-                    double factor = (double) ReadInHalfSecond;
+                } else if ((readInHalfSecond / (512*1024)) > 1) {
+                    double factor = (double) readInHalfSecond;
                     factor = factor / (512*1024);
                     String resultOfSpeed = String.format("%.2f", factor);
                     System.out.print("\r");
                     System.out.print("Data acquisition rate: " + resultOfSpeed + " Mb/sec");
                     System.out.flush();
 
-                } else if ((ReadInHalfSecond / 512) > 1) {
-                    double factor = (double) ReadInHalfSecond;
+                } else if ((readInHalfSecond / 512) > 1) {
+                    double factor = (double) readInHalfSecond;
                     factor = factor / (512);
                     String resultOfSpeed = String.format("%.2f", factor);
                     System.out.print("\r");
@@ -155,13 +174,13 @@ public class MiniLibraryApplication {
                     System.out.flush();
                 }else {
                     System.out.print("\r");
-                    System.out.print("Data acquisition rate: " + ReadInHalfSecond * 2 + " b/sec");
+                    System.out.print("Data acquisition rate: " + readInHalfSecond * 2 + " b/sec");
                     System.out.flush();
                 }
-                ReadInHalfSecond = 0;
+                readInHalfSecond = 0;
             }
         }
-
+        executor.shutdown();
         fos.flush();
         client.close();
 
