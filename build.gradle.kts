@@ -28,23 +28,10 @@ extra["springAiVersion"] = "1.0.0-M1"
 extra["springCloudVersion"] = "2023.0.2"
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springframework.boot:spring-boot-starter-websocket")
-    implementation("org.apache.kafka:kafka-streams")
-    implementation("org.springframework.ai:spring-ai-pgvector-store-spring-boot-starter")
     implementation("org.springframework.ai:spring-ai-postgresml-spring-boot-starter")
-    implementation("org.springframework.cloud:spring-cloud-bus")
-    implementation("org.springframework.cloud:spring-cloud-stream")
-    implementation("org.springframework.cloud:spring-cloud-stream-binder-kafka")
-    implementation("org.springframework.cloud:spring-cloud-stream-binder-kafka-streams")
-    implementation("org.springframework.kafka:spring-kafka")
-    compileOnly("org.projectlombok:lombok")
-    runtimeOnly("io.micrometer:micrometer-registry-prometheus")
-    runtimeOnly("org.postgresql:postgresql")
-    annotationProcessor("org.projectlombok:lombok")
+    implementation("org.springframework.cloud:spring-cloud-function-context")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.cloud:spring-cloud-stream-test-binder")
-    testImplementation("org.springframework.kafka:spring-kafka-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

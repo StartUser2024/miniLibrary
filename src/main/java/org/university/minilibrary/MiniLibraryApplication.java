@@ -1,10 +1,7 @@
 package org.university.minilibrary;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
-import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Iterator;
@@ -19,14 +16,13 @@ public class MiniLibraryApplication {
 
     public static void main(String args[]) {
         try {
-            // Этап подготовки
             Scanner in = new Scanner(System.in);
             System.out.print("Input IP: ");
             String ip = in.nextLine();
             //String ip = "127.0.0.1";
-            System.out.print("Input port (default 808): ");
+            System.out.print("Input port: ");
             int port = in.nextInt();
-            port = 808;
+            //int port = 808;
             System.out.print("Input directory: ");
             in.nextLine();
             String directory = in.nextLine();
@@ -87,44 +83,89 @@ public class MiniLibraryApplication {
 
     }
 
-    @SneakyThrows
+
     private static void handleRead(SelectionKey key, String directory) throws IOException {
         System.out.println("Reading client's message.");
-        long startTime = System.currentTimeMillis();
 
-        // create a ServerSocketChannel to read the request
         SocketChannel client = (SocketChannel)key.channel();
-        // Create ByteBuffer to read data
-        ByteBuffer Buffer = ByteBuffer.allocate(1024*1024*5);
-        client.read(Buffer);
-        Buffer.flip();
-        byte[] bytes = new byte[Buffer.remaining()];
-        Buffer.get(bytes);
+        ByteBuffer buffer = ByteBuffer.allocate(8192);
 
-        String json = new String(bytes);
-
-        Gson gson = new Gson();
-        JsonObject jsonObject = gson.fromJson(json, JsonObject.class);
-
-        String filename = jsonObject.get("name").getAsString();
-        long length = jsonObject.get("length").getAsLong();
-        byte[] payload = gson.fromJson(jsonObject.get("data"), byte[].class);
-
-        long currentTime = System.currentTimeMillis();
-        long elapsedTime = currentTime - startTime;
-        double speed = length / (elapsedTime / 1000.0);
-        System.out.println("Speed: " + speed + " bytes/sec");
-
+        // Read the file name
+        client.read(buffer);
+        buffer.flip();
+        String[] message = new String(buffer.array(), 0, buffer.limit()).split("\r\n");
+        String filename = message[0];
+        long length = Long.parseLong(message[1]);
         System.out.println("FileName: " + filename);
-        System.out.println("Length: " + length);
-        System.out.println("Payload: " + new String(payload));
+        if (length/(1024*1024*1024) > 1) {
+            double factor = (double) length /(1024*1024*1024);
+            String result = String.format("%.2f", factor);
+            System.out.println("Length: " + result + " Gb");
+        } else if (length/(1024*1024) > 1) {
+            double factor = (double) length /(1024*1024);
+            String result = String.format("%.2f", factor);
+            System.out.println("Length: " + result + " Mb");
+        } else if (length/1024 > 1) {
+            double factor = (double) length /1024;
+            String result = String.format("%.2f", factor);
+            System.out.println("Length: " + result + " Kb");
+        }else {
+            System.out.println("Length: " + length + " b");
+        }
+        buffer.clear();
+        File file = new File(directory + "\\" + filename);
+        FileOutputStream fos = new FileOutputStream(file);
 
-        FileOutputStream fos = new FileOutputStream(directory + "\\" + filename);
-        fos.write(payload);
-        fos.close();
-        System.out.println("Received message - fileName: " + filename + ", length: " + length + ", payload: " + new String(payload));
-        System.out.println("File received: " + filename);
+        long count = 0;
+        long startTime = System.currentTimeMillis();
+        long ReadInHalfSecond = 0;
+        System.out.print("Data acquisition rate: ? b/sec");
+        while (count < length) {
+            int bytesRead = client.read(buffer);
+            count += bytesRead;
+            ReadInHalfSecond += bytesRead;
+            long currentTime = System.currentTimeMillis();
+            buffer.flip();
+            fos.write(buffer.array(), 0, bytesRead);
+            buffer.clear();
+            if (currentTime - startTime > 500) { // Каждые 0.5 секунды
+                startTime = currentTime;
+                if ((ReadInHalfSecond / (512*1024*1024)) > 1) { // Изменение коследней строки на актуальную
+                    double factor = (double) ReadInHalfSecond;
+                    factor = factor / (512*1024*1024);
+                    String resultOfSpeed = String.format("%.2f", factor);
+                    System.out.print("\r");
+                    System.out.print("Data acquisition rate: " + resultOfSpeed + " Gb/sec");
+                    System.out.flush();
 
+                } else if ((ReadInHalfSecond / (512*1024)) > 1) {
+                    double factor = (double) ReadInHalfSecond;
+                    factor = factor / (512*1024);
+                    String resultOfSpeed = String.format("%.2f", factor);
+                    System.out.print("\r");
+                    System.out.print("Data acquisition rate: " + resultOfSpeed + " Mb/sec");
+                    System.out.flush();
+
+                } else if ((ReadInHalfSecond / 512) > 1) {
+                    double factor = (double) ReadInHalfSecond;
+                    factor = factor / (512);
+                    String resultOfSpeed = String.format("%.2f", factor);
+                    System.out.print("\r");
+                    System.out.print("Data acquisition rate: " + resultOfSpeed + " Kb/sec");
+                    System.out.flush();
+                }else {
+                    System.out.print("\r");
+                    System.out.print("Data acquisition rate: " + ReadInHalfSecond * 2 + " b/sec");
+                    System.out.flush();
+                }
+                ReadInHalfSecond = 0;
+            }
+        }
+
+        fos.flush();
         client.close();
+
+        System.out.println();
+        System.out.println("File received: " + filename);
     }
 }
