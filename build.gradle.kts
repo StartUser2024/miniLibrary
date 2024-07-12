@@ -1,7 +1,6 @@
 plugins {
     java
-    id("org.springframework.boot") version "3.3.1"
-    id("io.spring.dependency-management") version "1.1.5"
+
 }
 
 group = "org.University"
@@ -24,22 +23,13 @@ repositories {
     maven { url = uri("https://repo.spring.io/milestone") }
 }
 
-extra["springAiVersion"] = "1.0.0-M1"
-extra["springCloudVersion"] = "2023.0.2"
 
 dependencies {
-    implementation("org.springframework.ai:spring-ai-postgresml-spring-boot-starter")
-    implementation("org.springframework.cloud:spring-cloud-function-context")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.springframework.cloud:spring-cloud-stream-test-binder")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
-
-dependencyManagement {
-    imports {
-        mavenBom("org.springframework.ai:spring-ai-bom:${property("springAiVersion")}")
-        mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
-    }
+    testImplementation ("org.junit.jupiter:junit-jupiter-api:5.8.1")
+    testRuntimeOnly ("org.junit.jupiter:junit-jupiter-engine:5.8.1")
+    implementation ("org.apache.logging.log4j:log4j-api:2.20.0")
+    implementation ("org.apache.logging.log4j:log4j-core:2.20.0")
+    implementation ("org.apache.logging.log4j:log4j-slf4j-impl:2.20.0")
 }
 
 tasks.withType<Test> {
