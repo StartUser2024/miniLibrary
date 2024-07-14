@@ -34,7 +34,6 @@ public class DataReader implements Runnable {
                 buffer.clear();
                 count = message[2].length();
             }
-            System.out.println(message.length);
             while (count < length) {
                 int bytesRead = client.read(buffer);
                 count += bytesRead;
