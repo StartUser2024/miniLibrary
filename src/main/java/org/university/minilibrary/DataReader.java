@@ -6,16 +6,11 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
-public class DataReader extends Thread {
-    private final SocketChannel client;
-    private final String directory;
+public class DataReader implements Runnable {
+    public   SocketChannel client;
+    public   String directory;
     long count = 0;
     String fileName;
-
-    public DataReader(SocketChannel client, String directory) {
-        this.client = client;
-        this.directory = directory;
-    }
 
     @Override
     public void run() {
@@ -26,15 +21,14 @@ public class DataReader extends Thread {
             buffer.flip();
             String[] message = new String(buffer.array(), 0, buffer.limit()).split("\r\n");
             String filename = message[0];
-            System.out.println("filename: " + filename);
+            //System.out.println("filename: " + filename);
             fileName = filename;
             long length = Long.parseLong(message[1]);
-            System.out.println("length: " + length);
+            //System.out.println("length: " + length);
 
             File file = new File(directory + "\\" + filename);
             FileOutputStream fos = new FileOutputStream(file);
             buffer.flip();
-            long count = 0;
             if(message.length == 3) {
                 fos.write(message[2].getBytes(), 0, message[2].length());
                 buffer.clear();
@@ -50,6 +44,7 @@ public class DataReader extends Thread {
             }
             fos.flush();
             fos.close();
+            System.out.print("\r");
             System.out.println("FileName: " + filename);
             if (length/(1024*1024*1024) > 1) {
                 double factor = (double) length /(1024*1024*1024);
@@ -71,12 +66,4 @@ public class DataReader extends Thread {
             e.printStackTrace();
         }
     }
-
-//    public void start(){
-//        System.out.println("Thread started");
-//        if(thread == null){
-//            thread = new Thread(this);
-//            thread.start();
-//        }
-//    }
 }

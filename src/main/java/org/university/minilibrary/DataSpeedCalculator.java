@@ -5,10 +5,6 @@ public class DataSpeedCalculator implements Runnable{
     long lastCount = 0;
     long readInHalfSecond;
 
-    public DataSpeedCalculator(DataReader dataReader) {
-        this.dataReader = dataReader;
-    }
-
     @Override
     public void run() {
         // Логика расчета скорости

@@ -10,9 +10,7 @@ import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class MiniLibraryApplication {
     private static Selector selector = null;
@@ -92,17 +90,32 @@ public class MiniLibraryApplication {
 
         SocketChannel client = (SocketChannel)key.channel();
 
-        DataReader dataReader = new DataReader(client, directory);
-        dataReader.run();
+        DataReader dataReader = new DataReader();
 
-        System.out.println("BEFORE");
+        dataReader.client = client;
+        dataReader.directory = directory;
 
-        DataSpeedCalculator dataSpeedCalculator = new DataSpeedCalculator(dataReader);
+        ExecutorService executor1 = Executors.newSingleThreadExecutor();
+        Future<?> future = executor1.submit(dataReader);
+
+
+        DataSpeedCalculator dataSpeedCalculator = new DataSpeedCalculator();
+
+        dataSpeedCalculator.dataReader = dataReader;
+
         ScheduledExecutorService executor2 = Executors.newSingleThreadScheduledExecutor();
-        executor2.scheduleAtFixedRate(dataSpeedCalculator, 0, 500, TimeUnit.MILLISECONDS);
+        executor2.scheduleAtFixedRate(dataSpeedCalculator, 100, 500, TimeUnit.MILLISECONDS);
 
-        System.out.println("after");
+        while (!future.isDone() ){
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
+        executor1.shutdown();
         executor2.shutdown();
+        client.close();
     }
 }
