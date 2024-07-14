@@ -20,15 +20,15 @@ public class MiniLibraryApplication {
         try {
             Scanner in = new Scanner(System.in);
             System.out.print("Input IP: ");
-            //String ip = in.nextLine();
-            String ip = "127.0.0.1";
+            String ip = in.nextLine();
+            //String ip = "127.0.0.1";
             System.out.print("Input port: ");
-            //int port = in.nextInt();
-            int port = 808;
+            int port = in.nextInt();
+            //int port = 808;
             System.out.print("Input directory: ");
-            //in.nextLine();
-            //String directory = in.nextLine();
-            String directory = "C:\\Users\\User\\Downloads\\Arhiv";
+            in.nextLine();
+            String directory = in.nextLine();
+            //String directory = "C:\\Users\\User\\Downloads\\Arhiv";
             System.out.printf("IP: %s  Port: %d  Directory: %s \n", ip, port, directory);
             in.close();
 
