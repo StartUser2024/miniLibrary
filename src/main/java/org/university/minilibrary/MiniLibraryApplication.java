@@ -117,5 +117,6 @@ public class MiniLibraryApplication {
         executor1.shutdown();
         executor2.shutdown();
         client.close();
+        System.out.println("Connection Closed..");
     }
 }

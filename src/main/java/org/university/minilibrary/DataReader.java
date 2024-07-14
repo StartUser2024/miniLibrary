@@ -17,25 +17,39 @@ public class DataReader implements Runnable {
         try{
             System.out.println("Thread started. Reading data...");
             ByteBuffer buffer = ByteBuffer.allocate(8192);
-            client.read(buffer);
+            int bytesRead = client.read(buffer);
             buffer.flip();
-            String[] message = new String(buffer.array(), 0, buffer.limit()).split("\r\n");
+
+            String data = new String(buffer.array(), 0, bytesRead);
+
+            String[] message = data.split("\r\n");
+            if(message.length < 3) {
+                System.out.println("Error: Invalid data format received");
+                client.close();
+                return;
+            }
+
             String filename = message[0];
-            //System.out.println("filename: " + filename);
             fileName = filename;
             long length = Long.parseLong(message[1]);
-            //System.out.println("length: " + length);
 
             File file = new File(directory + "\\" + filename);
             FileOutputStream fos = new FileOutputStream(file);
-            buffer.flip();
+
             if(message.length == 3) {
                 fos.write(message[2].getBytes(), 0, message[2].length());
                 buffer.clear();
                 count = message[2].length();
             }
+
             while (count < length) {
-                int bytesRead = client.read(buffer);
+                bytesRead = client.read(buffer);
+                if(bytesRead == -1) {
+                    System.out.print("\r");
+                    System.out.println("Error: Connection closed by client");
+                    client.close();
+                    return;
+                }
                 count += bytesRead;
                 buffer.flip();
                 fos.write(buffer.array(), 0, bytesRead);
@@ -43,6 +57,7 @@ public class DataReader implements Runnable {
             }
             fos.flush();
             fos.close();
+
             System.out.print("\r");
             System.out.println("FileName: " + filename);
             if (length/(1024*1024*1024) > 1) {
@@ -61,8 +76,14 @@ public class DataReader implements Runnable {
                 System.out.println("Length: " + length + " b");
             }
             // Логика чтения данных
-        }catch (IOException e) {
-            e.printStackTrace();
+        }catch (IOException | NumberFormatException e) {
+            System.out.print("\r");
+            System.out.println("Error: " + e.getMessage());
+            try {
+                client.close();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
         }
     }
 }
